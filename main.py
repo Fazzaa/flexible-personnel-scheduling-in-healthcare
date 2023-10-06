@@ -21,18 +21,17 @@ periods = 3
 n = 10
 l = 2
 
-
 def v(Y):
-    pass
+    return 0
 
 def H1(Y):
-    pass
+    return 0
 
 def H2(Y):
-    pass
+    return 0
 
 def H3(Y):
-    pass
+    return 0
 
 ####### VARIABILI
 
@@ -50,10 +49,10 @@ Y = masterproblem.addVars(range(I), vtype=gp.GRB.BINARY, name="Y")
 subproblem.addConstr(gp.quicksum(X[j] for j in range(periods)) == n, name="first_constr")
 
 #Z_(j+l) = s_l + X_j   \forall j \in J, \forall l \in L 
-subproblem.addConstr(Z[periods+l] == s[l]*X[periods], name="second_constr")
+#subproblem.addConstr(((Z[p+l1] == s[l1]*X[p]) for p in range(periods) for l1 in range(L)), name="second_constr")
 
 #\sum_(j=j)^(j+p) X_j <= 1   \forall j \in J --> non ci deve essere overlap fra i turni
-subproblem.addConstr(gp.quicksum(X[j] for j in range(periods, periods+p)) <= 1, name="third_constr")
+#subproblem.addConstr(gp.quicksum(X[j] for j in range(periods, periods+p)) <= 1, name="third_constr")
 
 #funzione obiettivo del sub problem
 subproblem.setObjective(v(Y)+H2(Y)+H3(Y), gp.GRB.MINIMIZE)
@@ -61,8 +60,12 @@ subproblem.setObjective(v(Y)+H2(Y)+H3(Y), gp.GRB.MINIMIZE)
 #funzione obiettivo del master problem
 masterproblem.setObjective(v(Y)+H1(Y)+H2(Y)+H3(Y), gp.GRB.MINIMIZE)
 
-masterproblem.addConstr((Y[i] for i in range(I)) <= 1, name="master_constr")
+# Y_i <= 1
+masterproblem.addConstr((Y[i] <= 1 for i in range(I)) , name="master_constr")
 
+subproblem.update()
+
+subproblem.optimize()
 '''Subproblem
 For each shift to assign:
     Add a shift starting at the period j which minimizes the cost function
