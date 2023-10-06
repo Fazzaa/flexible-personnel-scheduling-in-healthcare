@@ -23,9 +23,9 @@ l = 3
 #X_j = 1 indica che il turno è iniziato al periodo j, 0 altrimenti
 X = model.addVars(range(periods), vtype=gp.GRB.BINARY, name="X")
 
-Z = model.addVars(range(periods+l), vtype=gp.GRB.BINARY, name="X")
+Z = model.addVars(range(periods+l), vtype=gp.GRB.BINARY, name="Z")
 
-s = model.addVars(range(l), vtype=gp.GRB.CONTINUOUS, name="X")
+s = model.addVars(range(l), vtype=gp.GRB.CONTINUOUS, name="s")
 
 
 ####### VINCOLI
