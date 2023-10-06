@@ -5,37 +5,76 @@ import gurobipy as gp
 #             C_H_2
 #             C_H_3
 #             X_j, Z_{ij} \in {0,1} \forall i \in I, k \in K    
-model = gp.Model()
+subproblem = gp.Model()
+masterproblem = gp.Model()
 
 
 #tour: due settimane
 #p: numero di periodi in un giorno
-#periods rappresenta il numero dei periodi in cui può iniziare il turno di lavoro
+#periods rappresenta il numero dei periodi in cui può iniziare il turno di lavoro, ipotizzato 3 [7.00-15.00-23.00]
 # n = quanti workshift deve fare ognuno nel tour
+# I indica il numero dei dipendenti
+L = [4,8]
+I = 5
 p = 24
-periods = 24
+periods = 3
 n = 10
-l = 3
+l = 2
 
+
+def v(Y):
+    pass
+
+def H1(Y):
+    pass
+
+def H2(Y):
+    pass
+
+def H3(Y):
+    pass
 
 ####### VARIABILI
 
 #X_j = 1 indica che il turno è iniziato al periodo j, 0 altrimenti
-X = model.addVars(range(periods), vtype=gp.GRB.BINARY, name="X")
+X = subproblem.addVars(range(periods), vtype=gp.GRB.BINARY, name="X")
 
-Z = model.addVars(range(periods+l), vtype=gp.GRB.BINARY, name="Z")
+Z = subproblem.addVars(range(periods+l), vtype=gp.GRB.BINARY, name="Z")
 
-s = model.addVars(range(l), vtype=gp.GRB.CONTINUOUS, name="s")
+s = subproblem.addVars(range(l), vtype=gp.GRB.CONTINUOUS, name="s")
 
-
+Y = masterproblem.addVars(range(I), vtype=gp.GRB.BINARY, name="Y")
 ####### VINCOLI
 
 # \sum_j X_j = n --> Ogni tour deve avere esattamente n workshift 
-model.addConstr(gp.quicksum(X[j] for j in range(periods)) == n, name="first_constr")
+subproblem.addConstr(gp.quicksum(X[j] for j in range(periods)) == n, name="first_constr")
 
-#Z_(j+l) = s_l + X_j   \forall j \in J, \forall l \in L
-#TODO: definire bene cosa fa questo maledetto vincolo, come funziona il valore di s ???
-model.addConstr(Z[periods+l] == s[l]*X[periods], name="second_constr")
+#Z_(j+l) = s_l + X_j   \forall j \in J, \forall l \in L 
+subproblem.addConstr(Z[periods+l] == s[l]*X[periods], name="second_constr")
 
 #\sum_(j=j)^(j+p) X_j <= 1   \forall j \in J --> non ci deve essere overlap fra i turni
-model.addConstr(gp.quicksum(X[j] for j in range(periods, periods+p)) <= 1, name="third_constr")
+subproblem.addConstr(gp.quicksum(X[j] for j in range(periods, periods+p)) <= 1, name="third_constr")
+
+#funzione obiettivo del sub problem
+subproblem.setObjective(v(Y)+H2(Y)+H3(Y), gp.GRB.MINIMIZE)
+
+#funzione obiettivo del master problem
+masterproblem.setObjective(v(Y)+H1(Y)+H2(Y)+H3(Y), gp.GRB.MINIMIZE)
+
+masterproblem.addConstr((Y[i] for i in range(I)) <= 1, name="master_constr")
+
+'''Subproblem
+For each shift to assign:
+    Add a shift starting at the period j which minimizes the cost function
+Next shift to assign
+Return tour
+'''
+
+'''Master problem
+Do
+    For each local search structure:
+        Do:
+            Execute current local search (SUBPROBLEM)
+        Repeat until no improvements are found
+    Next local search structure (NEW TOUR)
+Repeat until no more improvements have been found with any local search'''
