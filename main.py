@@ -49,6 +49,7 @@ Y = masterproblem.addVars(range(I), vtype=gp.GRB.BINARY, name="Y")
 subproblem.addConstr(gp.quicksum(X[j] for j in range(periods)) == n, name="first_constr")
 
 #Z_(j+l) = s_l + X_j   \forall j \in J, \forall l \in L 
+# La copertura di un turno deve essere uguale al grado di copertura (quante peprsone servono per ogni ora) durante quel turno moltiplcato per l'esistenza di un turno che inizia a quell'ora (per semplicità s[l] = 1)
 #subproblem.addConstr(((Z[p+l1] == s[l1]*X[p]) for p in range(periods) for l1 in range(L)), name="second_constr")
 
 #\sum_(j=j)^(j+p) X_j <= 1   \forall j \in J --> non ci deve essere overlap fra i turni
