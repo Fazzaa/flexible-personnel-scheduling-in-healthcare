@@ -1,72 +1,103 @@
 import gurobipy as gp
-# Sub-problem: min V(X,Z) + H_2(X,Z) + H_3(X,Z)
-# Constrains: 
-#             C_V
-#             C_H_2
-#             C_H_3
-#             X_j, Z_{ij} \in {0,1} \forall i \in I, k \in K    
+
 subproblem = gp.Model()
 masterproblem = gp.Model()
 
-
 #tour: due settimane
-#p: numero di periodi in un giorno
-#periods rappresenta il numero dei periodi in cui può iniziare il turno di lavoro, ipotizzato 3 [7.00-15.00-23.00]
-# n = quanti workshift deve fare ognuno nel tour
-# I indica il numero dei dipendenti
-L = [4,8]
-I = 5
-p = 24
-periods = 3
-n = 10
-l = 2
 
-def v(Y):
+L = [8] # due tipi di turni
+I = 5 # numero dei dipendenti
+p = 24 # numero di periodi in un giorno
+#periods = 3 # numero dei periodi in cui può iniziare il turno di lavoro -> [00.00-8.00-16.00]
+periods = [0,8,16]
+n = 10 # quanti workshift deve fare ognuno nel tour
+
+def vs(X,Z):
     return 0
 
-def H1(Y):
+def vm(Y):
     return 0
 
-def H2(Y):
+def H1m(Y):
     return 0
 
-def H3(Y):
+def H2s(X,Z):
+    return 0
+
+def H2m(Y):
+    return 0
+
+def H3s(X,Z):
+    return 0
+
+def H3m(Y):
     return 0
 
 ####### VARIABILI
 
 #X_j = 1 indica che il turno è iniziato al periodo j, 0 altrimenti
-X = subproblem.addVars(range(periods), vtype=gp.GRB.BINARY, name="X")
+#X = subproblem.addVars(range(periods), vtype=gp.GRB.BINARY, name="X")
+X = {}
+Z = {}
+s = {}
+for j in periods:
+    X[j] = subproblem.addVar(vtype=gp.GRB.BINARY, name=f"X_{j}")
+    Z[j] = subproblem.addVar(vtype=gp.GRB.BINARY, name=f"Z_{j}")
 
-Z = subproblem.addVars(range(periods+l), vtype=gp.GRB.BINARY, name="Z")
+for l in L:
+    s[l] = subproblem.addVar(vtype=gp.GRB.CONTINUOUS, name=f"s_{l}")
 
-s = subproblem.addVars(range(l), vtype=gp.GRB.CONTINUOUS, name="s")
+subproblem.update()
+print(X)
+print(Z)
+print(s)
 
 Y = masterproblem.addVars(range(I), vtype=gp.GRB.BINARY, name="Y")
+
+masterproblem.update()
+print(Y)
+
+
 ####### VINCOLI
 
 # \sum_j X_j = n --> Ogni tour deve avere esattamente n workshift 
-subproblem.addConstr(gp.quicksum(X[j] for j in range(periods)) == n, name="first_constr")
+somma = 0
+for j in periods:
+    somma += X[j]
 
-#Z_(j+l) = s_l + X_j   \forall j \in J, \forall l \in L 
+subproblem.addConstr(somma == n, name="primo_vincolo")
+
+for j in periods:
+    for l in L:
+        index = (j+l)%24
+        subproblem.addConstr(Z[index] == s[l]*X[j], name="secondo_vincolo")
+
+# non da errore ma non fa quello che deve secondo me
+# anche perchè non ho capito bene quello che deve fare
 # La copertura di un turno deve essere uguale al grado di copertura (quante peprsone servono per ogni ora) durante quel turno moltiplcato per l'esistenza di un turno che inizia a quell'ora (per semplicità s[l] = 1)
-#subproblem.addConstr(((Z[p+l1] == s[l1]*X[p]) for p in range(periods) for l1 in range(L)), name="second_constr")
-
-#\sum_(j=j)^(j+p) X_j <= 1   \forall j \in J --> non ci deve essere overlap fra i turni
-#subproblem.addConstr(gp.quicksum(X[j] for j in range(periods, periods+p)) <= 1, name="third_constr")
+somma = 0
+for j in periods:
+    idx = (j+p)%24
+    for i in range(j, idx+1):
+        somma += X[i]
+    subproblem.addConstr(somma <= 1, name="terzo_vincolo")
 
 #funzione obiettivo del sub problem
-subproblem.setObjective(v(Y)+H2(Y)+H3(Y), gp.GRB.MINIMIZE)
+subproblem.setObjective(vs(X,Z)+H2s(X,Z)+H3s(X,Z), gp.GRB.MINIMIZE)
 
 #funzione obiettivo del master problem
-masterproblem.setObjective(v(Y)+H1(Y)+H2(Y)+H3(Y), gp.GRB.MINIMIZE)
+masterproblem.setObjective(vm(Y)+H1m(Y)+H2m(Y)+H3m(Y), gp.GRB.MINIMIZE)
 
 # Y_i <= 1
-masterproblem.addConstr((Y[i] <= 1 for i in range(I)) , name="master_constr")
+for i in range(I):
+    masterproblem.addConstr(Y[i] <= 1, name="master_constr")
 
 subproblem.update()
-
+masterproblem.update()
 subproblem.optimize()
+masterproblem.optimize()
+
+
 '''Subproblem
 For each shift to assign:
     Add a shift starting at the period j which minimizes the cost function
