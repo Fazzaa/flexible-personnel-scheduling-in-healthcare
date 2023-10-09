@@ -27,10 +27,10 @@ def subproblem(pi):
     subproblem.addConstr(somma == n, name="primo_vincolo")
 
 
-    '''for j in periods:
+    for j in periods:
         if j != 40:
             for l in L:
-                subproblem.addConstr(Z[j+l] == s[l]*X[j], name="secondo_vincolo")'''
+                subproblem.addConstr(Z[j+l] == s[l]*X[j], name="secondo_vincolo")
     
     
     for j in periods[:-2]: # j = 32
