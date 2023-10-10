@@ -2,21 +2,25 @@ import gurobipy as gp
 
 L = [8] # due tipi di turni
 p = 48 # numero di periodi totali
+Z = [0] * 48
+Z[0] = 1
+Z[24] = 1
+print(Z)
 periods = [i for i in range(p) if i%8==0]
 n = 2 # quanti workshift deve fare ognuno nel tour
 
 def subproblem(pi):
     subproblem = gp.Model()
     X = {} #48 ore, ogni 8 ore può iniziare turno
-    Z = {}
+    #Z = {}
     s = {}
     
     for j in periods:
         X[j] = subproblem.addVar(obj = pi[j], vtype=gp.GRB.BINARY, name=f"X_{j}")
-        Z[j] = subproblem.addVar(vtype=gp.GRB.BINARY, name=f"Z_{j}")
+        #Z[j] = subproblem.addVar(vtype=gp.GRB.BINARY, name=f"Z_{j}")
 
     for l in L:
-        s[l] = subproblem.addVar(vtype=gp.GRB.CONTINUOUS, name="s")
+        s[l] = 1 #subproblem.addVar(vtype=gp.GRB.CONTINUOUS, name="s")
 
     subproblem.update()
 
