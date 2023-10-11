@@ -2,25 +2,20 @@ import gurobipy as gp
 
 L = [8] # due tipi di turni
 p = 48 # numero di periodi totali
-Z = [0] * 48
-Z[0] = 1
-Z[24] = 1
-print(Z)
 periods = [i for i in range(p) if i%8==0]
 n = 2 # quanti workshift deve fare ognuno nel tour
 
 def subproblem(pi):
+    print("INIZIO SUBPROBLEM")
     subproblem = gp.Model()
     X = {} #48 ore, ogni 8 ore può iniziare turno
-    #Z = {}
-    s = {}
     
-    for j in periods:
-        X[j] = subproblem.addVar(obj = pi[j], vtype=gp.GRB.BINARY, name=f"X_{j}")
+    for index, value in enumerate(periods):
+        X[value] = subproblem.addVar(obj = pi[index], vtype=gp.GRB.BINARY, name=f"X_{value}")
         #Z[j] = subproblem.addVar(vtype=gp.GRB.BINARY, name=f"Z_{j}")
 
-    for l in L:
-        s[l] = 1 #subproblem.addVar(vtype=gp.GRB.CONTINUOUS, name="s")
+    #for l in L:
+    #    s[l] = 1 #subproblem.addVar(vtype=gp.GRB.CONTINUOUS, name="s")
 
     subproblem.update()
 
@@ -31,10 +26,10 @@ def subproblem(pi):
     subproblem.addConstr(somma == n, name="primo_vincolo")
 
 
-    for j in periods:
-        if j != 40:
-            for l in L:
-                subproblem.addConstr(Z[j+l] == s[l]*X[j], name="secondo_vincolo")
+    #for j in periods:
+    #    if j != 40:
+    #        for l in L:
+    #            subproblem.addConstr(Z[j+l] == s[l]*X[j], name="secondo_vincolo")
     
     
     for j in periods[:-2]: # j = 32
@@ -43,7 +38,7 @@ def subproblem(pi):
         for i in range(j, idx+1):
             if i % 8 == 0:
                 somma += X[i]
-        subproblem.addConstr(somma <= 1, name="terzo_vincolo")
+        subproblem.addConstr(somma <= 1, name="secondo_vincolo")
     
     subproblem.update()
     subproblem.optimize()
@@ -53,8 +48,10 @@ def subproblem(pi):
         if i%8==0:
             if X[i].X == 1:
                 shift[i:(i+8)] = [1]*8
-    print(shift)
-
+    #print(shift)
+    #print(subproblem.ObjVal)
+    
+    return subproblem.Objval, shift 
 
 if __name__=="__main__":
     import random
