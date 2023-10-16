@@ -77,7 +77,7 @@ def subproblem(pi):
     for j in starting_time[:-21]:
         print(slack_seven_days[j].X)
     
-    return subproblem.objVal, shift
+    return subproblem.objVal, shift, Z
     
     
     
