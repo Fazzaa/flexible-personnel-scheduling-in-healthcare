@@ -13,10 +13,9 @@ def subproblem(pi):
     p = 24
     total_time = 336
     sevendays = 168
-
+    service_coverage_value = 1 #quanto 
     starting_time = [i for i in range(total_time) if i%8==0] # [0,8,16,24,32,40]
-    print(starting_time)
-    #make subproblem
+    
     subproblem=Model()
     
     X = {} # Vale 1 se inizi a lavorare a pedice j
@@ -24,6 +23,16 @@ def subproblem(pi):
         X[value] = subproblem.addVar(0,1, 1-pi[idx], vtype = GRB.BINARY, name=f"X_{value}")
 
     subproblem.addConstr(quicksum(X[j] for j in starting_time) == n)
+
+    Z = [0]*total_time
+    for i in range(total_time):
+        Z[i] = subproblem.addVar(0, 1, vtype=GRB.BINARY, name=f"Z_{i}")
+
+     
+    for j in starting_time:
+        for i in range(j,j+workshift_len):
+            subproblem.addConstr(Z[i] == (X[j]*service_coverage_value), name="coverage_constraint")
+    subproblem.update()
     
     for j in starting_time[:-2]: # j = 32
         somma = 0
@@ -32,19 +41,22 @@ def subproblem(pi):
             if i % 8 == 0:
                 somma += X[i]
         subproblem.addConstr(somma <= 1, name="secondo_vincolo")
-    
-    slack_five_days = {}
+    subproblem.update()
+
+
+    slack_seven_days = {}
     for j in starting_time[:-21]:
-        slack_five_days[j] = subproblem.addVar(0, vtype=GRB.CONTINUOUS, name="slack_var")
+        slack_seven_days[j] = subproblem.addVar(0, vtype=GRB.CONTINUOUS, name="slack_var")
         subproblem.update()
         somma = 0
         idx = (j+sevendays)
         for i in range(j, sevendays):
             if i % workshift_len == 0:
                 somma += X[i]
-        subproblem.addConstr(somma-slack_five_days[j] <= 5, name="terzo_vincolo")
+        print(somma)
+        subproblem.addConstr(somma-slack_seven_days[j] <= 5, name="terzo_vincolo")
 
-    subproblem.setObjective(quicksum(slack_five_days[i] for i in starting_time[:-21]), sense=GRB.MINIMIZE)
+    subproblem.setObjective(quicksum(slack_seven_days[i] for i in starting_time[:-21]), sense=GRB.MINIMIZE)
 
     subproblem.update()
     subproblem.optimize()
@@ -61,7 +73,10 @@ def subproblem(pi):
         
         print(shift[i], end="")
     #print(shift)
-    print(slack_five_days)
+
+    for j in starting_time[:-21]:
+        print(slack_seven_days[j].X)
+    
     return subproblem.objVal, shift
     
     

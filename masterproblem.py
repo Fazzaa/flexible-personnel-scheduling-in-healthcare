@@ -24,3 +24,12 @@ for i in I:
 
 masterproblem.update()
 
+'''
+Do
+    For each local search structure:
+        Do:
+            Execute current local search -> SUBPROBLEM?
+        Repeat until no improvements are found -> ? 
+    Next local search structure ?
+Repeat until no more improvements have been found with any local search
+'''
