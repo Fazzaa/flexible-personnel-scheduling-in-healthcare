@@ -34,27 +34,41 @@ for i in range(I):
     Y[i] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{i}")
     masterproblem.addConstr(Y[i] <= 1)
 
-masterproblem.setObjective(sum(requested_coverage), sense=GRB.MINIMIZE)
+masterproblem.addConstr(quicksum(Y[i] for i in range(I)) <= I)
+
+#objective_function = quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) ** 2 for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
+#masterproblem.setObjective(objective_function, sense=GRB.MINIMIZE)
+#print(f"SONO QUIIIIIIIIIIIIIIIIIIIIIIIIII \t\t\t{objective_function}")
 
 masterproblem.update()
-i = 0
-while i < 10:
+
+iteration = 0
+while iteration < 10:
     masterproblem.optimize()
     tour, Z = subproblem(remaining_coverage)
     tour_pool.append((tour, Z))
-    i += 1
     masterproblem.update()
     remaining_coverage = compute_vec_distance(tour_pool, remaining_coverage)
-
     
-for i in range(len(tour_pool)):
+    if tour_pool:
+        objective_function = quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) ** 2 for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
+        masterproblem.setObjective(objective_function, sense=GRB.MINIMIZE)
+
+    if masterproblem.status == GRB.OPTIMAL:
+        print(Y)
+
+    iteration+=1
+
+   
+'''for i in range(len(tour_pool)):
     for k in range(len(tour_pool[i][0])):
         if k != 0 and k % 24 == 0:
             print("\n")    
         
-        print(tour_pool[i][0][k], end="")
+        print(tour_pool[i][0][k], end="")'''
 
 print(remaining_coverage)
+
 
 '''
 Do
