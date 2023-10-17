@@ -27,6 +27,7 @@ requested_coverage = [3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
 remaining_coverage = requested_coverage
 
 tour_pool = []
+
 masterproblem = Model()
 
 Y = {}
@@ -68,7 +69,9 @@ while iteration < 10:
         print(tour_pool[i][0][k], end="")'''
 
 print(remaining_coverage)
+chosen_tours = [tour_pool[i][0] for i in range(len(tour_pool)) if Y[i].X == 1]
 
+print(chosen_tours)
 
 '''
 Do
