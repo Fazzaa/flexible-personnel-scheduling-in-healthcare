@@ -66,6 +66,7 @@ def subproblem(pi):
             if X[idx].X == 1:
                 shift[idx] = 1
     
+    coverage =  [int(elem.X) for elem in Z]
     '''for i in range(len(shift)):
         if i != 0 and i % 24 == 0:
             print("\n")    
@@ -76,7 +77,7 @@ def subproblem(pi):
     #for j in starting_time[:-21]:
     #    print(slack_seven_days[j].X)
     
-    return shift, Z
+    return shift, coverage
     
     
     
