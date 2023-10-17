@@ -53,7 +53,6 @@ def subproblem(pi):
         for i in range(j, sevendays):
             if i % workshift_len == 0:
                 somma += X[i]
-        print(somma)
         subproblem.addConstr(somma-slack_seven_days[j] <= 5, name="terzo_vincolo")
 
     subproblem.setObjective(quicksum(slack_seven_days[i] for i in starting_time[:-21]), sense=GRB.MINIMIZE)
@@ -67,17 +66,17 @@ def subproblem(pi):
             if X[idx].X == 1:
                 shift[idx] = 1
     
-    for i in range(len(shift)):
+    '''for i in range(len(shift)):
         if i != 0 and i % 24 == 0:
             print("\n")    
         
-        print(shift[i], end="")
+        print(shift[i], end="")'''
     #print(shift)
 
-    for j in starting_time[:-21]:
-        print(slack_seven_days[j].X)
+    #for j in starting_time[:-21]:
+    #    print(slack_seven_days[j].X)
     
-    return subproblem.objVal, shift, Z
+    return shift, Z
     
     
     

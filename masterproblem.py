@@ -2,19 +2,29 @@ from gurobipy import *
 from subproblem import subproblem
 import time
 
+def diff(a,b):
+    if b != []:
+        result = []
+        for i in range(len(a)):
+            result.append(a[i]-b[i])
+        return result
+    return a
+
+def compute_vec_distance(tour_pool, requested_coverage):
+    #tour = (tour, Z) ([1,0,0,0,0,0], [1,1,1,1,1,1,1,0,0,0])
+    remaining_coverage = requested_coverage
+    for i in range(len(tour_pool)):
+        remaining_coverage = diff(remaining_coverage, tour_pool[i][1]*int(Y[i].X))
+    return remaining_coverage
+
 t1=time.time()
 I = 10
 periods = 336
 
-tour0 = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]*7
-tour1 = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]*7
-tour2 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]*7
-#tour2 = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
 requested_coverage = [3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1]*7 
-# provided esiste per ogni tour, e c'è solo se il tour è assegnato. 
-provided_coverage = [1]*336 
 
+
+tour_pool = []
 masterproblem = Model()
 
 Y = {}
@@ -22,17 +32,29 @@ for i in range(I):
     Y[i] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{i}")
     masterproblem.addConstr(Y[i] <= 1)
 
-def compute_vec_distance(requested, provided):
-    return [requested[i]-provided[i] for i in range(len(requested))]
 
-masterproblem.setObjective(compute_vec_distance(requested_coverage, provided_coverage), sense=GRB.MINIMIZE)
+
+remaining_coverage = compute_vec_distance(tour_pool, requested_coverage)
+masterproblem.setObjective(sum(remaining_coverage), sense=GRB.MINIMIZE)
 
 masterproblem.update()
-
-while True:
+i = 0
+while i < 10:
     masterproblem.optimize()
+    tour, Z = subproblem(remaining_coverage)
+    tour_pool.append((tour, Z))
+    i += 1
+    remaining_coverage = compute_vec_distance(tour_pool, remaining_coverage)
 
+    
+for i in range(len(tour_pool)):
+    for k in range(len(tour_pool[i][0])):
+        if k != 0 and k % 24 == 0:
+            print("\n")    
+        
+        print(tour_pool[i][0][k], end="")
 
+print(remaining_coverage)
 '''
 Do
     For each local search structure:
@@ -42,3 +64,4 @@ Do
     Next local search structure ?
 Repeat until no more improvements have been found with any local search
 '''
+
