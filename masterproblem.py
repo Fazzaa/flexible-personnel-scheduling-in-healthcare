@@ -6,12 +6,12 @@ def diff(a,b):
     if b != []:
         result = []
         for i in range(len(a)):
-            result.append(a[i]-b[i])
+            result.append(a[i]-b[i].X)
         return result
     return a
 
 def compute_vec_distance(tour_pool, requested_coverage):
-    #tour = (tour, Z) ([1,0,0,0,0,0], [1,1,1,1,1,1,1,0,0,0])
+    #tour = [(tour, Z), ...] --> [([1,0,0,0,0,0], [1,1,1,1,1,1,1,0,0,0]), ...]
     remaining_coverage = requested_coverage
     for i in range(len(tour_pool)):
         remaining_coverage = diff(remaining_coverage, tour_pool[i][1]*int(Y[i].X))
@@ -46,6 +46,7 @@ while i < 10:
     i += 1
     remaining_coverage = compute_vec_distance(tour_pool, remaining_coverage)
 
+print(f"eccolo: {sum(tour_pool[0][1])}")
     
 for i in range(len(tour_pool)):
     for k in range(len(tour_pool[i][0])):
