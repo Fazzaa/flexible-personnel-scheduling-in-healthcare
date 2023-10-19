@@ -5,12 +5,10 @@ import numpy as np
 
 
 def diff(a,b):
-    if b != []:
-        result = []
-        for i in range(len(a)):
-            result.append(a[i]-b[i])
-        return result
-    return a
+    result = []
+    for i in range(len(a)):
+        result.append(a[i]-b[i])
+    return result
 
 def compute_vec_distance(tour_pool, requested_coverage):
 #tour = [(tour, Z), ...] --> [([1,0,0,0,0,0], [1,1,1,1,1,1,1,0,0,0]), ...]
@@ -36,19 +34,13 @@ remaining_coverage = requested_coverage
 tour_pool = []
 masterproblem = Model()
 
-#* VINCOLI
 
 #* Y[i] = 1 se il tour i-esimo è selezionato, 0 altrimenti
 Y = {}
 for i in range(I):
     Y[i] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{i}")
     masterproblem.addConstr(Y[i] <= 1)
-
-#* Somma di Y[i] <= 10
-masterproblem.addConstr(quicksum(Y[i] for i in range(I)) <= 10)
-
-#* Funzione Obiettivo
-masterproblem.setObjective(objfn(requested_coverage, tour_pool, Y), sense=GRB.MINIMIZE)
+    
 
 masterproblem.update()
 
@@ -56,30 +48,26 @@ masterproblem.update()
 iteration = 0
 while iteration < 15:
 
-   # print(f"somma delle y vale: {quicksum(Y[i] for i in range(len(Y)))}")
-
     print(f"Iterazione numero: {iteration}")
     
     if iteration >= 10:
         Y[iteration] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{iteration}")
 
-    masterproblem.update()
-    masterproblem.optimize()
     n, tour, Z = subproblem(remaining_coverage)
     remaining_coverage = compute_vec_distance(tour_pool, requested_coverage)
 
-    if tour == [] and Z == []:
-        break
-
     tour_pool.append((tour, Z))
+
     masterproblem.setObjective(objfn(requested_coverage, tour_pool, Y), sense=GRB.MINIMIZE)
+    masterproblem.addConstr(quicksum(Y[i] for i in range(len(Y))) <= 10)
+    masterproblem.update()
+    masterproblem.optimize()
+
     iteration+=1
     I+=1  # aggiungo un dipendente
 
 for i in range(len(Y)):
     print(f"Y_{i}: {Y[i].X}")
-
-print(sum(requested_coverage))
 
 print(remaining_coverage)
 print(sum(remaining_coverage))
