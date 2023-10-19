@@ -73,4 +73,4 @@ if __name__ == '__main__':
     total_time = 336
     starting_time = [i for i in range(total_time) if i%8==0]
     shift = subproblem([random.randint(0,10) for i in range(len(starting_time))])
-    #print(shift)
+    print(shift)

@@ -19,6 +19,7 @@ def compute_vec_distance(tour_pool, requested_coverage):
 #tour = [(tour, Z), ...] --> [([1,0,0,0,0,0], [1,1,1,1,1,1,1,0,0,0]), ...]
     remaining_coverage = requested_coverage
     for i in range(len(tour_pool)):
+        print(Y[i])
         temp = np.array(tour_pool[i][1])*int(Y[i].X)
 
         remaining_coverage = diff(remaining_coverage, temp)
@@ -40,13 +41,13 @@ for i in range(I):
     Y[i] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{i}")
     masterproblem.addConstr(Y[i] <= 1)
 
-masterproblem.addConstr(quicksum(Y) <= I)
+masterproblem.addConstr(quicksum(Y[i] for i in range(len(Y))) <= I)
+#masterproblem.addConstr(sum(Y[i] for i in range(len(Y))) <= I)
 
-#objective_function = quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) ** 2 for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
+objective_function = quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) ** 2 for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
 
-#masterproblem.setObjective(objective_function, sense=GRB.MINIMIZE)
+masterproblem.setObjective(objective_function, sense=GRB.MINIMIZE)
 
-#print(f"SONO QUIIIIIIIIIIIIIIIIIIIIIIIIII \t\t\t{objective_function}")
 
 masterproblem.update()
 iteration = 0
@@ -62,13 +63,14 @@ while iteration < 30:
     if tour == [] and Z == []:
         break
 
+    if tour_pool:
+        objective_function = quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
+        masterproblem.setObjective(objective_function, sense=GRB.MINIMIZE)
+
     print(f"Questo è l'objVal del sottoproblema {n}")
     tour_pool.append((tour, Z))
     remaining_coverage = compute_vec_distance(tour_pool, remaining_coverage)
 
-    if tour_pool:
-        objective_function = quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) ** 2 for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
-        masterproblem.setObjective(objective_function, sense=GRB.MINIMIZE)
 
     '''if masterproblem.status == GRB.OPTIMAL:
 
