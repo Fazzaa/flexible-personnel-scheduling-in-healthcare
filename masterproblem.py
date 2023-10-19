@@ -44,9 +44,8 @@ for i in range(I):
     Y[i] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{i}")
     masterproblem.addConstr(Y[i] <= 1)
 
-#* Somma di Y[i] <= I
+#* Somma di Y[i] <= 10
 masterproblem.addConstr(quicksum(Y[i] for i in range(I)) <= 10)
-
 
 #* Funzione Obiettivo
 masterproblem.setObjective(objfn(requested_coverage, tour_pool, Y), sense=GRB.MINIMIZE)
