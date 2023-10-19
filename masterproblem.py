@@ -44,14 +44,16 @@ for i in range(I):
 masterproblem.addConstr(quicksum(Y[i] for i in range(len(Y))) <= I)
 #masterproblem.addConstr(sum(Y[i] for i in range(len(Y))) <= I)
 
-objective_function = quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) ** 2 for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
+# objective_function = quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) ** 2 for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
+def objfn(requested_coverage, tour_pool, Y):
+    return quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) ** 2 for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
 
-masterproblem.setObjective(objective_function, sense=GRB.MINIMIZE)
+masterproblem.setObjective(objfn(requested_coverage, tour_pool, Y), sense=GRB.MINIMIZE)
 
 
 masterproblem.update()
 iteration = 0
-while iteration < 30:
+while iteration < 15:
     print(f"Iterazione numero: {iteration}")
     if iteration >= 10:
         Y[iteration] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{iteration}")
@@ -64,12 +66,13 @@ while iteration < 30:
         break
 
     if tour_pool:
-        objective_function = quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
-        masterproblem.setObjective(objective_function, sense=GRB.MINIMIZE)
+        #objective_function = quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) ** 2 for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
+        masterproblem.setObjective(objfn(requested_coverage, tour_pool, Y), sense=GRB.MINIMIZE)
 
     print(f"Questo è l'objVal del sottoproblema {n}")
     tour_pool.append((tour, Z))
     remaining_coverage = compute_vec_distance(tour_pool, remaining_coverage)
+    requested_coverage = remaining_coverage
 
 
     '''if masterproblem.status == GRB.OPTIMAL:
