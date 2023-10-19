@@ -2,8 +2,8 @@ from gurobipy import *
 
   
 
-def subproblem(pi):
-    #print(pi)
+def subproblem(remaining_coverage):
+    #print(remaining_coverage)
     n = 10 # numero di turni che devono essere lavorati nel periodo analizzato
     workshift_len = 8
     p = 24
@@ -35,12 +35,12 @@ def subproblem(pi):
 
     #X [1,0,0,0,0,0,0,0] -> Z=[1,1,1,1,1,1,1,1]
 
-    #pi = [3,3,3,3,3,3,3,3] - [1,1,1,1,1,1,1,1] + [..............] = 0
-    for i in range(len(pi)):
-        subproblem.addConstr(pi[i] - Z[i] + slack_1[i] >= 0, name=f"under_coverage_constraint_{i}")
-        subproblem.addConstr(pi[i] - Z[i] - slack_2[i]<= 0, name=f"over_coverage_constraint_{i}")
+    #remaining_coverage = [3,3,3,3,3,3,3,3] - [1,1,1,1,1,1,1,1] + [..............] = 0
+    for i in range(len(remaining_coverage)):
+        subproblem.addConstr(remaining_coverage[i] - Z[i] + slack_1[i] >= 0, name=f"under_coverage_constraint_{i}")
+        subproblem.addConstr(remaining_coverage[i] - Z[i] - slack_2[i] <= 0, name=f"over_coverage_constraint_{i}")
 
-    subproblem.setObjective(quicksum(slack_1[i] for i in range(len(slack_1)))*1 + quicksum(slack_2[i] for i in range(len(slack_2)))*1, sense = GRB.MINIMIZE)
+    subproblem.setObjective(quicksum(slack_1[i] for i in range(len(slack_1))) + quicksum(slack_2[i] for i in range(len(slack_2))), sense = GRB.MINIMIZE)
 
     for j in starting_time[:-2]:
         somma = 0
@@ -73,4 +73,4 @@ if __name__ == '__main__':
     total_time = 336
     starting_time = [i for i in range(total_time) if i%8==0]
     shift = subproblem([random.randint(0,10) for i in range(len(starting_time))])
-    print(shift)
+    #print(shift[1])
