@@ -38,15 +38,13 @@ masterproblem = Model()
 #* Y[i] = 1 se il tour i-esimo è selezionato, 0 altrimenti
 Y = {}
 for i in range(I):
-    Y[i] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{i}")
-    masterproblem.addConstr(Y[i] <= 1)
+    Y[i] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{i}") 
     
-
+    
 masterproblem.update()
 
-
 iteration = 0
-while iteration < 15:
+while iteration < 30:
 
     print(f"Iterazione numero: {iteration}")
     
@@ -60,6 +58,7 @@ while iteration < 15:
 
     masterproblem.setObjective(objfn(requested_coverage, tour_pool, Y), sense=GRB.MINIMIZE)
     masterproblem.addConstr(quicksum(Y[i] for i in range(len(Y))) <= 10)
+
     masterproblem.update()
     masterproblem.optimize()
 
