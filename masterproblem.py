@@ -25,10 +25,11 @@ def objfn(requested_coverage, tour_pool, Y):
 
 
 t1=time.time()
-I = 10
+I = 16
 periods = 336
 
-requested_coverage = [3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1]*7
+requested_coverage = [3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]*14
+print(f"Pippoooo:{sum(requested_coverage)}")
 remaining_coverage = requested_coverage
 
 tour_pool = []
@@ -40,34 +41,40 @@ Y = {}
 for i in range(I):
     Y[i] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{i}") 
     
-    
 masterproblem.update()
 
 iteration = 0
-while iteration < 30:
-
+flag = False 
+prev_sub_obj_val = 0
+while True:
     print(f"Iterazione numero: {iteration}")
     
-    if iteration >= 10:
+    # "Column Generation ;-)"
+    if iteration >= I:
         Y[iteration] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{iteration}")
-
-    n, tour, Z = subproblem(remaining_coverage)
-    remaining_coverage = compute_vec_distance(tour_pool, requested_coverage)
-
+    
+    subproblem_obj_val, tour, Z = subproblem(remaining_coverage)
     tour_pool.append((tour, Z))
 
     masterproblem.setObjective(objfn(requested_coverage, tour_pool, Y), sense=GRB.MINIMIZE)
-    masterproblem.addConstr(quicksum(Y[i] for i in range(len(Y))) <= 10)
+    masterproblem.addConstr(quicksum(Y[i] for i in range(len(Y))) <= I)
 
     masterproblem.update()
     masterproblem.optimize()
-
+    remaining_coverage = compute_vec_distance(tour_pool, requested_coverage)
+    print(f"\nObjVal: {masterproblem.objVal}")
+    
+    if subproblem_obj_val == prev_sub_obj_val:
+        break
+    else:
+        prev_sub_obj_val = subproblem_obj_val
+    
     iteration+=1
-    I+=1  # aggiungo un dipendente
 
 for i in range(len(Y)):
     print(f"Y_{i}: {Y[i].X}")
 
 print(remaining_coverage)
 print(sum(remaining_coverage))
+
 print(f"In: {iteration} iterazioni")
