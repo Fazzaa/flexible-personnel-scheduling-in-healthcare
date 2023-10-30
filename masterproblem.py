@@ -23,17 +23,19 @@ def compute_vec_distance(tour_pool, requested_coverage):
 def objfn(requested_coverage, tour_pool, Y):
     return quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) ** 2 for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
 
+def get_random_coverage(days):
+    i = 0
+    while i < 3: 
+        day_coverage.extend([rn.randint(2,4)]*8)
+        i += 1
+    return day_coverage*days
+
 t1=time.time()
 I = 13
 periods = 336
 day_coverage = []
 
-'''i = 0
-while i < 3: 
-    day_coverage.extend([rn.randint(2,4)]*8)
-    i += 1
-'''
-#requested_coverage = day_coverage*14
+#requested_coverage = get_random_coverage(14)
 requested_coverage = [2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4]*14
 remaining_coverage = requested_coverage
 
@@ -55,7 +57,7 @@ while True:
     if iteration >= I:
         Y[iteration] = masterproblem.addVar(0,1, vtype=GRB.BINARY, name=f"Y_{iteration}")
     
-    subproblem_obj_val, tour, Z = subproblem(remaining_coverage)
+    tour, Z = subproblem(remaining_coverage)
     tour_pool.append((tour, Z))
 
     masterproblem.setObjective(objfn(requested_coverage, tour_pool, Y), sense=GRB.MINIMIZE)
@@ -64,8 +66,6 @@ while True:
     masterproblem.update()
     masterproblem.optimize()
     remaining_coverage = compute_vec_distance(tour_pool, requested_coverage)
-    print(f"\nObjVal Master Problem: {masterproblem.objVal}")
-    print(f"\nPrevious ObjVal Master Problem: {prev_mp_obj_val}")
     
     if (masterproblem.objVal / prev_mp_obj_val) < 1.05:
         break

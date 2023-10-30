@@ -87,7 +87,7 @@ def subproblem(remaining_coverage):
                     shift[idx] = 1
 
     coverage = [int(elem.X) for elem in Z]
-    return subproblem.objVal, shift, coverage
+    return shift, coverage
 
 if __name__ == '__main__':
     import random
