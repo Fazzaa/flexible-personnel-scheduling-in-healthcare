@@ -1,22 +1,23 @@
 from gurobipy import *
 import random as rn
 
-  
-
 def subproblem(remaining_coverage):
     #print(remaining_coverage)
     n = 10 # numero di turni che devono essere lavorati nel periodo analizzato
     morning_ws = 3
     afternoon_ws = 3
     night_ws = 3
-    cost = 100
-    undercoverage_cost = 200
-    overcoverage_cost = 50
+    cost = 10
+    undercoverage_cost = 50
+    overcoverage_cost = 25
     workshift_len = 8
     p = 24
+    
     total_time = 336
+
     service_coverage_value = 1 #quanto
     starting_time = [i for i in range(total_time) if i%8==0] # [0,8,16,24,32,40]
+    
     subproblem=Model()
 
     X = {} # Vale 1 se inizi a lavorare a pedice j
@@ -38,6 +39,7 @@ def subproblem(remaining_coverage):
     Z = [0]*total_time
     slack_1 = [0]*total_time
     slack_2 = [0]*total_time
+    
     for i in range(total_time):
         Z[i] = subproblem.addVar(0, 1, vtype=GRB.BINARY, name=f"Z_{i}")
         slack_1[i] = subproblem.addVar(0, vtype=GRB.CONTINUOUS, name=f"slack_{i}")
@@ -47,13 +49,12 @@ def subproblem(remaining_coverage):
         for i in range(j,j+workshift_len):
             subproblem.addConstr(Z[i] == (X[j]*service_coverage_value), name="coverage_constraint")
     subproblem.update()
-
     #X [1,0,0,0,0,0,0,0] -> Z=[1,1,1,1,1,1,1,1]
 
     #remaining_coverage = [3,3,3,3,3,3,3,3] - [1,1,1,1,1,1,1,1] + [..............] = 0
     for i in range(len(remaining_coverage)):
-        subproblem.addConstr(remaining_coverage[i] - Z[i] + slack_1[i] >= 0, name=f"over_coverage_constraint_{i}")
-        subproblem.addConstr(remaining_coverage[i] - Z[i] - slack_2[i] <= 0, name=f"under_coverage_constraint_{i}")
+        subproblem.addConstr((remaining_coverage[i] - Z[i]) + slack_1[i] >= 0, name=f"over_coverage_constraint_{i}")
+        subproblem.addConstr((remaining_coverage[i] - Z[i]) - slack_2[i] <= 0, name=f"under_coverage_constraint_{i}")
 
 
 
@@ -71,13 +72,13 @@ def subproblem(remaining_coverage):
                 somma += X[i]
 
         subproblem.addConstr(somma <= 1, name="secondo_vincolo")
+    
     subproblem.update()
     subproblem.optimize()
 
     if subproblem.status == GRB.INFEASIBLE:
         print("INFEASIBLE")
         return 0, [], []
-
     else:
         shift = [0]*total_time
         for idx in range(total_time):
