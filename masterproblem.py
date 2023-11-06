@@ -20,12 +20,6 @@ def compute_vec_distance(tour_pool, requested_coverage, Y):
 def objfn(requested_coverage, tour_pool, Y):
     return quicksum((requested_coverage[i] - tupla[1][i] * Y[j]) ** 2 for i in range(len(requested_coverage)) for j, tupla in enumerate(tour_pool))
 
-def get_random_coverage(days):
-    i = 0
-    while i < 3: 
-        day_coverage.extend([rn.randint(2,4)]*8)
-        i += 1
-    return day_coverage*days
 
 def masterproblem(n_workers, requested_coverage):
     remaining_coverage = requested_coverage
@@ -67,17 +61,6 @@ def masterproblem(n_workers, requested_coverage):
     for i in range(len(Y)):
         print(f"Y_{i}: {Y[i].X}")
 
-    print(requested_coverage)
-    
-    print("---------------------PRINTING REMAINING COVERAGE AFTER SCHEDULING---------------------------")
-    for j in range(0, len(remaining_coverage)):
-        if j % 24 != 0:
-            print(f"[{remaining_coverage[j]}]", end="")
-        else:
-            print("\n")
-            print(f"[{remaining_coverage[j]}]", end ="")
-    
-    print(sum(remaining_coverage))
     print(f"In: {iteration} iterazioni")
     return remaining_coverage
 
@@ -85,7 +68,6 @@ def masterproblem(n_workers, requested_coverage):
 if __name__ == "__main__":
     n_workers = 13
     requested_coverage = [3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,4,4,4,4,4,4,4,4]*14
-    #requested_coverage = get_random_coverage(14)
     
     t1=time.time()
     output = masterproblem(n_workers, requested_coverage)

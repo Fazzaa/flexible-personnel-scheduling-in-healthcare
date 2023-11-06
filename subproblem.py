@@ -2,8 +2,7 @@ from gurobipy import *
 import random as rn
 
 def subproblem(remaining_coverage):
-    #print(remaining_coverage)
-    n = 10 # numero di turni che devono essere lavorati nel periodo analizzato
+    n_workshift = 10 
     morning_ws = 3
     afternoon_ws = 3
     night_ws = 3
@@ -11,7 +10,6 @@ def subproblem(remaining_coverage):
     undercoverage_cost = 50
     overcoverage_cost = 25
     workshift_len = 8
-    p = 24
     
     total_time = 336
 
@@ -25,7 +23,7 @@ def subproblem(remaining_coverage):
     for idx, value in enumerate(starting_time):
         X[value] = subproblem.addVar(0,1, vtype = GRB.BINARY, name=f"X_{value}")
 
-    subproblem.addConstr(quicksum(X[j] for j in starting_time) == n)
+    subproblem.addConstr(quicksum(X[j] for j in starting_time) == n_workshift)
 
     morning_penalty = subproblem.addVar(0, vtype=GRB.CONTINUOUS, name="morning_penalty")
     afternoon_penalty = subproblem.addVar(0, vtype=GRB.CONTINUOUS, name="afternoon_penalty")
@@ -49,9 +47,7 @@ def subproblem(remaining_coverage):
         for i in range(j,j+workshift_len):
             subproblem.addConstr(Z[i] == (X[j]*service_coverage_value), name="coverage_constraint")
     subproblem.update()
-    #X [1,0,0,0,0,0,0,0] -> Z=[1,1,1,1,1,1,1,1]
-
-    #remaining_coverage = [3,3,3,3,3,3,3,3] - [1,1,1,1,1,1,1,1] + [..............] = 0
+    
     for i in range(len(remaining_coverage)):
         subproblem.addConstr((remaining_coverage[i] - Z[i]) + slack_1[i] >= 0, name=f"over_coverage_constraint_{i}")
         subproblem.addConstr((remaining_coverage[i] - Z[i]) - slack_2[i] <= 0, name=f"under_coverage_constraint_{i}")
@@ -66,7 +62,7 @@ def subproblem(remaining_coverage):
  
     for j in starting_time[:-2]:
         somma = 0
-        idx = (j+p)
+        idx = (j+24)
         for i in range(j, idx):
             if i % 8 == 0:
                 somma += X[i]
@@ -89,16 +85,5 @@ def subproblem(remaining_coverage):
     coverage = [int(elem.X) for elem in Z]
     return shift, coverage
 
-if __name__ == '__main__':
-    import random
-    total_time = 336
-    starting_time = [i for i in range(total_time) if i%8==0]
-    shift = subproblem([random.randint(0,10) for i in range(len(starting_time))])
-    for i in range(len(shift[1])):
-        if i % 24 != 0:
-            print(shift[1][i], end ="")
-        else:
-            print("\n")
-            print(shift[1][i], end ="")
             
     
